@@ -1,0 +1,16 @@
+{
+  "name": "easy-tweening",
+  "version": "0.0.1",
+  "description": "easy tweening",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": "zhangyu1818",
+  "license": "MIT",
+  "scripts": {
+    "build": "npm run clear && tsc -d",
+    "clear": "rm -rf ./dist"
+  },
+  "devDependencies": {
+    "typescript": "^3.8.3"
+  }
+}
