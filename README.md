@@ -1,6 +1,6 @@
 # easy-tweening
 
-- 仅2kb的补间动画库
+- 仅1kb(gzipped)的补间动画库
 - 支持多种缓动算法
 - 使用Typescript编写，自动推断类型
 
