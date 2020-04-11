@@ -1,31 +1,32 @@
-type FromValue = number;
-type ToValue = number;
+type ValueType = number | number[];
 
-type onChangeCallBack = (currentValue: number) => void;
+type onChangeCallBack<T> = (
+  currentValue: T extends number ? number : number[]
+) => void;
 
-export interface Options {
+export interface Options<Value extends ValueType> {
   duration: number;
-  value: [FromValue, ToValue];
+  value: [Value, Value];
   easing?: Easings;
-  onChange?: onChangeCallBack;
+  onChange?: onChangeCallBack<Value>;
   key?: any;
 }
 
-interface TweenObject {
+interface TweenObject<Value extends ValueType> {
   startTime?: number;
   elapsedTime?: number;
-  from: number;
-  to: number;
+  from: Value;
+  to: Value;
   duration: number;
   completed: () => void;
   easing: Easings;
-  onChange?: onChangeCallBack;
+  onChange?: onChangeCallBack<Value>;
   key?: any;
 }
 
 interface rAFType {
-  all: Set<TweenObject>;
-  add: (obj: TweenObject) => void;
+  all: Set<TweenObject<ValueType>>;
+  add: (obj: TweenObject<ValueType>) => void;
 }
 
 export type Easings =
@@ -47,6 +48,8 @@ type EasingFunc = {
   [key in Easings]: (t: number) => number;
 };
 
+const NEVER_USED_KEY = "@@NEVER_USED_KEY";
+
 const easings: EasingFunc = {
   linear: t => t,
   easeInQuad: t => t * t,
@@ -65,13 +68,24 @@ const easings: EasingFunc = {
     t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * --t * t * t * t * t
 };
 
-const getCurrentValue = (from: number, to: number, easing: number) =>
-  from + (to - from) * easing;
+const getCurrentValue = (from: ValueType, to: ValueType, easing: number) => {
+  if (Array.isArray(from) && Array.isArray(to)) {
+    if (from.length !== to.length)
+      throw new Error("when value type is Array,they should have same length");
+    return from.map((fv, index) => {
+      const tv = to[index];
+      return fv + (tv - fv) * easing;
+    });
+  }
+  if (typeof from === "number" && typeof to === "number")
+    return from + (to - from) * easing;
+  throw new Error("value must have same type");
+};
 
-const getProgress = ({ elapsedTime = 0, duration }: TweenObject) =>
+const getProgress = ({ elapsedTime = 0, duration }: TweenObject<ValueType>) =>
   duration > 0 ? Math.min(elapsedTime / duration, 1) : 1;
 
-const trackTime = (obj: TweenObject, now: number) => {
+const trackTime = (obj: TweenObject<ValueType>, now: number) => {
   if (!obj.startTime) obj.startTime = now;
   obj.elapsedTime = now - obj.startTime;
 };
@@ -98,16 +112,18 @@ const rAF: rAFType = {
   }
 };
 
-const tweening = (option: Options): Promise<void> =>
+const tweening = <Value extends ValueType>(
+  option: Options<Value>
+): Promise<void> =>
   new Promise(completed => {
     const {
       value: [from, to],
       duration,
-      key,
+      key = NEVER_USED_KEY,
       onChange,
       easing = "linear"
     } = option;
-    const tweenObject = {
+    const tweenObject: TweenObject<Value> = {
       from,
       to,
       duration,
