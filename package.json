@@ -1,10 +1,18 @@
 {
   "name": "easy-tweening",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "easy tweening",
+  "keywords": [
+    "tweening",
+    "animation"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "zhangyu1818",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zhangyu1818/easy-tweening"
+  },
   "license": "MIT",
   "scripts": {
     "build": "npm run clear && tsc -d",
