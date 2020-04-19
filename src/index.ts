@@ -9,6 +9,7 @@ export interface Options<Value extends ValueType> {
   value: [Value, Value];
   easing?: Easings;
   onChange?: onChangeCallBack<Value>;
+  yoyo?: boolean;
   key?: any;
 }
 
@@ -20,6 +21,7 @@ interface TweenObject<Value extends ValueType> {
   duration: number;
   completed: () => void;
   easing: Easings;
+  yoyo?: boolean;
   onChange?: onChangeCallBack<Value>;
   key?: any;
 }
@@ -51,21 +53,22 @@ type EasingFunc = {
 const NEVER_USED_KEY = "@@NEVER_USED_KEY";
 
 const easings: EasingFunc = {
-  linear: t => t,
-  easeInQuad: t => t * t,
-  easeOutQuad: t => t * (2 - t),
-  easeInOutQuad: t => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t),
-  easeInCubic: t => t * t * t,
-  easeOutCubic: t => --t * t * t + 1,
-  easeInOutCubic: t =>
+  linear: (t) => t,
+  easeInQuad: (t) => t * t,
+  easeOutQuad: (t) => t * (2 - t),
+  easeInOutQuad: (t) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t),
+  easeInCubic: (t) => t * t * t,
+  easeOutCubic: (t) => --t * t * t + 1,
+  easeInOutCubic: (t) =>
     t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
-  easeInQuart: t => t * t * t * t,
-  easeOutQuart: t => 1 - --t * t * t * t,
-  easeInOutQuart: t => (t < 0.5 ? 8 * t * t * t * t : 1 - 8 * --t * t * t * t),
-  easeInQuint: t => t * t * t * t * t,
-  easeOutQuint: t => 1 + --t * t * t * t * t,
-  easeInOutQuint: t =>
-    t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * --t * t * t * t * t
+  easeInQuart: (t) => t * t * t * t,
+  easeOutQuart: (t) => 1 - --t * t * t * t,
+  easeInOutQuart: (t) =>
+    t < 0.5 ? 8 * t * t * t * t : 1 - 8 * --t * t * t * t,
+  easeInQuint: (t) => t * t * t * t * t,
+  easeOutQuint: (t) => 1 + --t * t * t * t * t,
+  easeInOutQuint: (t) =>
+    t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * --t * t * t * t * t,
 };
 
 const getCurrentValue = (from: ValueType, to: ValueType, easing: number) => {
@@ -90,15 +93,25 @@ const trackTime = (obj: TweenObject<ValueType>, now: number) => {
   obj.elapsedTime = now - obj.startTime;
 };
 
-const tick: FrameRequestCallback = now => {
+const removeTrack = (obj: TweenObject<ValueType>) => {
+  delete obj.startTime;
+  delete obj.elapsedTime;
+};
+
+const tick: FrameRequestCallback = (now) => {
   const { all } = rAF;
-  all.forEach(current => {
+  all.forEach((current) => {
     trackTime(current, now);
     const progress = getProgress(current);
-    const { from, to, completed, onChange, easing } = current;
+    const { from, to, completed, onChange, easing, yoyo } = current;
     const currentValue = getCurrentValue(from, to, easings[easing](progress));
     if (onChange) onChange(currentValue);
     if (progress < 1) return;
+    if (yoyo) {
+      [current.from, current.to] = [current.to, current.from];
+      removeTrack(current);
+      return;
+    }
     completed();
     all.delete(current);
   });
@@ -109,19 +122,20 @@ const rAF: rAFType = {
   all: new Set(),
   add(obj) {
     if (this.all.add(obj).size < 2) requestAnimationFrame(tick);
-  }
+  },
 };
 
 const tweening = <Value extends ValueType>(
   option: Options<Value>
 ): Promise<void> =>
-  new Promise(completed => {
+  new Promise((completed) => {
     const {
       value: [from, to],
       duration,
       key = NEVER_USED_KEY,
       onChange,
-      easing = "linear"
+      easing = "linear",
+      yoyo,
     } = option;
     const tweenObject: TweenObject<Value> = {
       from,
@@ -130,13 +144,14 @@ const tweening = <Value extends ValueType>(
       key,
       completed,
       onChange,
-      easing
+      easing,
+      yoyo,
     };
     rAF.add(tweenObject);
   });
 
 const stop = (key: any) => {
-  const target = [...rAF.all].find(v => v.key === key);
+  const target = [...rAF.all].find((v) => v.key === key);
   if (target) rAF.all.delete(target);
 };
 

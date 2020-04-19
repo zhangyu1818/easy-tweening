@@ -17,6 +17,7 @@ $ npm install easy-tweening
 | duration 	| 动画持续时间（毫秒）     	| number                        	| -      	|
 | easing   	| 缓动动画                 	| 见下方                        	    | linear 	|
 | value    	| 需要计算的值             	| number\|number[]               	| -      	|
+| yoyo    	| 是否循环               	| boolean                          	| -      	|
 | onChange 	| 每帧计算后调用的回调函数 	| (value:number\|number[])=>void 	| -      	|
 
 easing类型：`linear`
@@ -42,10 +43,11 @@ const element = document.querySelector(".box");
 tweening({
   duration: 3000,
   easing: "easeInOutQuad",
+  yoyo: true,
   value: [0, 200],
   onChange(x) {
     element.style.transform = `translateX(${x}px)`;
-  }
+  },
 })
 ```
 
@@ -60,11 +62,11 @@ tweening({
   easing: "easeInOutQuad",
   value: [
     [0, 100],
-    [200, 500]
+    [200, 500],
   ],
   onChange([x, y]) {
     element.style.transform = `translate(${x}px,${y}px)`;
-  }
+  },
 });
 ```
 
@@ -82,7 +84,7 @@ tweening({
   value: [0, 1],
   onChange(opacity) {
     element.style.opacity = String(opacity);
-  }
+  },
 }).then(() => {
   console.log("completed");
 });
@@ -103,7 +105,7 @@ tweening({
   value: [0, 1],
   onChange(opacity) {
     element.style.opacity = String(opacity);
-  }
+  },
 });
 
 stop(element);
