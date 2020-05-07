@@ -155,5 +155,9 @@ const stop = (key: any) => {
   if (target) rAF.all.delete(target);
 };
 
+const clear = () => {
+  rAF.all.clear();
+};
+
 export default tweening;
-export { stop };
+export { stop, clear };

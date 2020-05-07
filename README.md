@@ -111,6 +111,14 @@ tweening({
 stop(element);
 ```
 
+**清空动画**
+
+```javascript
+import { clear } from "easy-tweening";
+
+clear();
+```
+
 ## 使用许可
 
-[MIT](/LICENSE)
+MIT
